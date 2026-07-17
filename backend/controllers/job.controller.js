@@ -269,3 +269,59 @@ export const getAdminJobs = async (req, res) => {
         });
     }
 };
+
+// ─── DELETE JOB (Recruiter) ───────────────────────────────────────────────────
+export const deleteJob = async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id);
+        if (!job) {
+            return res.status(404).json({ message: "Job not found.", success: false });
+        }
+        if (String(job.created_by) !== String(req.id)) {
+            return res.status(403).json({ message: "You are not authorized to delete this job.", success: false });
+        }
+        await Job.findByIdAndDelete(req.params.id);
+        return res.status(200).json({ message: "Job deleted successfully.", success: true });
+    } catch (error) {
+        console.error("[deleteJob]", error);
+        return res.status(500).json({ message: "Internal server error.", success: false });
+    }
+};
+
+// ─── UPDATE JOB (Recruiter) ───────────────────────────────────────────────────
+export const updateJob = async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id);
+        if (!job) {
+            return res.status(404).json({ message: "Job not found.", success: false });
+        }
+        if (String(job.created_by) !== String(req.id)) {
+            return res.status(403).json({ message: "You are not authorized to update this job.", success: false });
+        }
+
+        const {
+            title, description, requirements,
+            salary, location, jobType, experience, position
+        } = req.body;
+
+        const updateData = {};
+        if (title !== undefined) updateData.title = title.trim();
+        if (description !== undefined) updateData.description = description.trim();
+        if (requirements !== undefined) {
+            updateData.requirements = Array.isArray(requirements)
+                ? requirements.map(r => r.trim()).filter(Boolean)
+                : requirements.split(",").map(r => r.trim()).filter(Boolean);
+        }
+        if (salary !== undefined) updateData.salary = Number(salary);
+        if (location !== undefined) updateData.location = location.trim();
+        if (jobType !== undefined) updateData.jobType = jobType;
+        if (experience !== undefined) updateData.experienceLevel = Number(experience);
+        if (position !== undefined) updateData.position = Number(position);
+
+        const updatedJob = await Job.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate("company");
+        return res.status(200).json({ message: "Job updated successfully.", job: updatedJob, success: true });
+    } catch (error) {
+        console.error("[updateJob]", error);
+        return res.status(500).json({ message: "Internal server error.", success: false });
+    }
+};

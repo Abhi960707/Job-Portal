@@ -48,9 +48,9 @@ export const register = async (req, res) => {
         }
 
         // 5. Password length
-        if (password.length < 6) {
+        if (password.length < 4) {
             return res.status(422).json({
-                message: "Password must be at least 6 characters.",
+                message: "Password must be at least 4 characters.",
                 success: false
             });
         }

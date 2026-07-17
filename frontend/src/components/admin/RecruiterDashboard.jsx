@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux'
 import useGetCompany from '@/hooks/useGetCompany'
 import useGetAdminJobs from '@/hooks/useGetAdminJobs'
 import { Button } from '../ui/button'
+import BackButton from '../shared/BackButton'
 
 const RecruiterDashboard = () => {
     useGetCompany();
@@ -22,7 +23,10 @@ const RecruiterDashboard = () => {
     return (
         <div className="bg-gray-50 min-h-screen pb-10">
             <Navbar />
-            <div className="max-w-6xl mx-auto mt-10 px-4">
+            <div className="max-w-6xl mx-auto mt-6 px-4">
+                <BackButton to="/" label="Back to Home" />
+            </div>
+            <div className="max-w-6xl mx-auto mt-4 px-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div>
                         <h1 className="font-bold text-3xl text-gray-900">Dashboard</h1>
@@ -75,7 +79,7 @@ const RecruiterDashboard = () => {
                     </div>
 
                     {/* Applicants Stats */}
-                    <div onClick={() => navigate("/admin/jobs")} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:border-green-200 transition-all duration-300 cursor-pointer relative group">
+                    <div onClick={() => navigate("/admin/applicants")} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:border-green-200 transition-all duration-300 cursor-pointer relative group">
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-gray-500 font-medium">Total Applicants</span>
                             <div className="p-3 bg-green-50 rounded-xl text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
@@ -84,7 +88,7 @@ const RecruiterDashboard = () => {
                         </div>
                         <h2 className="text-4xl font-extrabold text-gray-900">{totalApplicants}</h2>
                         <div className="flex items-center gap-1 mt-4 text-xs font-semibold text-green-600 group-hover:translate-x-1 transition-transform">
-                            View Applications <ArrowUpRight className="h-3 w-3" />
+                            View All Applicants <ArrowUpRight className="h-3 w-3" />
                         </div>
                     </div>
                 </div>

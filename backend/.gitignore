@@ -1,0 +1,43 @@
+# ==========================================
+# Backend (Node/Express) .gitignore
+# ==========================================
+
+# ─── Dependencies ─────────────────────────
+node_modules/
+.npm/
+
+# ─── Environment & Secrets ─────────────────
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets.json
+credentials.json
+serviceAccountKey.json
+
+# ─── Build & Artifacts ────────────────────
+dist/
+build/
+coverage/
+
+# ─── Logs ──────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ─── Caches & Temp ─────────────────────────
+temp/
+tmp/
+.cache/
+
+# ─── OS generated files ────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE and Editor files ──────────────────
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/

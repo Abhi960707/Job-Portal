@@ -1,20 +1,22 @@
 import React, { useState } from 'react'
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
-import { LogOut, User2, LayoutDashboard, Building2, Briefcase, Menu, X } from 'lucide-react'
+import { LogOut, LayoutDashboard, Building2, Briefcase, Menu, X, Users, Search } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { USER_API_END_POINT } from '@/utils/constant'
 import axios from 'axios'
 import { setUser } from '@/redux/authSlice'
+import { setSearchJobByText } from '@/redux/jobSlice'
 import { toast } from 'sonner'
+import { Input } from '../ui/input'
 
 const Navbar = () => {
     const { user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const logoutHandler = async () => {
         try {
@@ -30,10 +32,17 @@ const Navbar = () => {
         }
     }
 
-    // Get initials for avatar fallback
     const getInitials = (name) => {
         if (!name) return "U";
         return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    const searchHandler = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            dispatch(setSearchJobByText(searchQuery.trim()));
+            navigate("/jobs");
+        }
     }
 
     return (
@@ -42,42 +51,51 @@ const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
 
                     {/* Logo */}
-                    <Link to="/" className="flex-shrink-0">
+                    <Link to="/" className="flex-shrink-0 mr-4">
                         <h1 className="text-2xl font-bold tracking-tight">
                             <span className="text-[#F83002]">Job</span>
                             <span className="text-[#6A38C2]">Portal</span>
                         </h1>
                     </Link>
 
+                    {/* Search Bar (Desktop) */}
+                    {(!user || user?.role !== 'recruiter') && (
+                        <form onSubmit={searchHandler} className="hidden md:flex flex-1 max-w-sm mx-4">
+                            <div className="relative w-full">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                                <Input
+                                    type="text"
+                                    placeholder="Search jobs..."
+                                    className="w-full pl-9 bg-gray-50 border-gray-200 focus-visible:ring-[#6A38C2] rounded-full h-9"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </form>
+                    )}
+
                     {/* Desktop Nav Links */}
-                    <ul className="hidden md:flex font-medium items-center gap-6 text-gray-700">
+                    <ul className="hidden md:flex font-medium items-center gap-6 text-gray-700 ml-auto">
                         {user && user.role === 'recruiter' ? (
                             <>
                                 <li>
-                                    <Link
-                                        to="/admin/dashboard"
-                                        className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200"
-                                    >
-                                        <LayoutDashboard className="h-4 w-4" />
-                                        Dashboard
+                                    <Link to="/admin/dashboard" className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200">
+                                        <LayoutDashboard className="h-4 w-4" /> Dashboard
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link
-                                        to="/admin/companies"
-                                        className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200"
-                                    >
-                                        <Building2 className="h-4 w-4" />
-                                        Companies
+                                    <Link to="/admin/companies" className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200">
+                                        <Building2 className="h-4 w-4" /> Companies
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link
-                                        to="/admin/jobs"
-                                        className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200"
-                                    >
-                                        <Briefcase className="h-4 w-4" />
-                                        Jobs
+                                    <Link to="/admin/jobs" className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200">
+                                        <Briefcase className="h-4 w-4" /> Jobs
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link to="/admin/applicants" className="flex items-center gap-1.5 hover:text-[#6A38C2] transition-colors duration-200">
+                                        <Users className="h-4 w-4" /> Applicants
                                     </Link>
                                 </li>
                             </>
@@ -91,7 +109,7 @@ const Navbar = () => {
                     </ul>
 
                     {/* Desktop Auth Buttons */}
-                    <div className="hidden md:flex items-center gap-3">
+                    <div className="hidden md:flex items-center gap-4 ml-6 pl-6 border-l border-gray-200">
                         {!user ? (
                             <>
                                 <Link to="/login">
@@ -105,96 +123,47 @@ const Navbar = () => {
                                     </Button>
                                 </Link>
                             </>
-                        ) : user.role === 'recruiter' ? (
-                            /* Recruiter: Show avatar + visible logout button */
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-9 w-9 border-2 border-[#6A38C2]">
+                        ) : (
+                            <div className="flex items-center gap-4">
+                                <Link to="/profile" className="flex items-center gap-3 cursor-pointer group">
+                                    <Avatar className="h-10 w-10 border-2 border-[#6A38C2] group-hover:border-[#5d07f1] transition-colors duration-200">
                                         <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
                                         <AvatarFallback className="bg-[#6A38C2] text-white text-sm font-semibold">
                                             {getInitials(user?.fullname)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="hidden lg:block">
-                                        <p className="text-sm font-semibold text-gray-800 leading-tight">{user?.fullname}</p>
+                                    <div className="flex flex-col">
+                                        <p className="text-sm font-semibold text-gray-800 leading-tight group-hover:text-[#6A38C2] transition-colors">{user?.fullname}</p>
                                         <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                                     </div>
-                                </div>
+                                </Link>
                                 <Button
                                     onClick={logoutHandler}
                                     variant="outline"
-                                    size="sm"
-                                    className="border-red-200 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 flex items-center gap-2 transition-colors duration-200 font-medium"
+                                    className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-600 flex items-center gap-2 transition-colors duration-200 font-medium rounded-xl h-10 px-4"
                                 >
                                     <LogOut className="h-4 w-4" />
                                     Logout
                                 </Button>
                             </div>
-                        ) : (
-                            /* Student: Avatar popover */
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <button className="focus:outline-none focus:ring-2 focus:ring-[#6A38C2] rounded-full">
-                                        <Avatar className="h-9 w-9 cursor-pointer border-2 border-[#6A38C2] hover:border-[#5d07f1] transition-colors duration-200">
-                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
-                                            <AvatarFallback className="bg-[#6A38C2] text-white text-sm font-semibold">
-                                                {getInitials(user?.fullname)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-72 p-0 shadow-lg border border-gray-100" align="end">
-                                    {/* Header */}
-                                    <div className="flex gap-3 p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white">
-                                        <Avatar className="h-12 w-12 border-2 border-[#6A38C2]">
-                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
-                                            <AvatarFallback className="bg-[#6A38C2] text-white font-semibold">
-                                                {getInitials(user?.fullname)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <h4 className="font-semibold text-gray-800">{user?.fullname}</h4>
-                                            <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
-                                            <span className="inline-block text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full mt-1 font-medium capitalize">
-                                                {user?.role}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    {/* Bio */}
-                                    {user?.profile?.bio && (
-                                        <div className="px-4 py-2 border-b border-gray-50">
-                                            <p className="text-xs text-gray-500 italic">{user.profile.bio}</p>
-                                        </div>
-                                    )}
-                                    {/* Actions */}
-                                    <div className="p-2">
-                                        <Link to="/profile">
-                                            <button className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-purple-50 hover:text-[#6A38C2] rounded-md transition-colors duration-150 font-medium">
-                                                <User2 className="h-4 w-4" />
-                                                View Profile
-                                            </button>
-                                        </Link>
-                                        <button
-                                            onClick={logoutHandler}
-                                            className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors duration-150 font-medium mt-1"
-                                        >
-                                            <LogOut className="h-4 w-4" />
-                                            Logout
-                                        </button>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
                         )}
                     </div>
 
                     {/* Mobile Menu Toggle */}
-                    <button
-                        className="md:hidden p-2 text-gray-600 hover:text-[#6A38C2] transition-colors duration-200"
-                        onClick={() => setMobileOpen(!mobileOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                    </button>
+                    <div className="md:hidden flex items-center gap-2">
+                        {(!user || user?.role !== 'recruiter') && (
+                            <button onClick={() => navigate('/browse')} className="p-2 text-gray-600 hover:text-[#6A38C2]">
+                                <Search className="h-5 w-5" />
+                            </button>
+                        )}
+                        <button
+                            className="p-2 text-gray-600 hover:text-[#6A38C2] transition-colors duration-200"
+                            onClick={() => setMobileOpen(!mobileOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mobile Menu */}
@@ -211,6 +180,9 @@ const Navbar = () => {
                                 <Link to="/admin/jobs" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-purple-50 hover:text-[#6A38C2] rounded-md text-sm font-medium">
                                     <Briefcase className="h-4 w-4" /> Jobs
                                 </Link>
+                                <Link to="/admin/applicants" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-purple-50 hover:text-[#6A38C2] rounded-md text-sm font-medium">
+                                    <Users className="h-4 w-4" /> Applicants
+                                </Link>
                             </>
                         ) : (
                             <>
@@ -219,7 +191,7 @@ const Navbar = () => {
                                 <Link to="/browse" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 text-gray-700 hover:bg-purple-50 hover:text-[#6A38C2] rounded-md text-sm font-medium">Browse</Link>
                             </>
                         )}
-                        <div className="pt-2 border-t border-gray-100 mt-2">
+                        <div className="pt-4 border-t border-gray-100 mt-2">
                             {!user ? (
                                 <div className="flex gap-2 px-4">
                                     <Link to="/login" className="flex-1" onClick={() => setMobileOpen(false)}>
@@ -230,20 +202,26 @@ const Navbar = () => {
                                     </Link>
                                 </div>
                             ) : (
-                                <div className="px-4 space-y-2">
-                                    {user.role === 'student' && (
-                                        <Link to="/profile" onClick={() => setMobileOpen(false)}>
-                                            <button className="flex w-full items-center gap-2 py-2.5 text-sm text-gray-700 font-medium">
-                                                <User2 className="h-4 w-4" /> View Profile
-                                            </button>
-                                        </Link>
-                                    )}
-                                    <button
+                                <div className="px-4 space-y-4">
+                                    <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 border-2 border-[#6A38C2]">
+                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
+                                            <AvatarFallback className="bg-[#6A38C2] text-white text-sm font-semibold">
+                                                {getInitials(user?.fullname)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800">{user?.fullname}</p>
+                                            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                                        </div>
+                                    </Link>
+                                    <Button
                                         onClick={() => { logoutHandler(); setMobileOpen(false); }}
-                                        className="flex w-full items-center gap-2 py-2.5 text-sm text-red-600 font-medium"
+                                        variant="outline"
+                                        className="w-full border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center justify-center gap-2 rounded-xl"
                                     >
                                         <LogOut className="h-4 w-4" /> Logout
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </div>

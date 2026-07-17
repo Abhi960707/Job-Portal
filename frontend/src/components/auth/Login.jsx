@@ -41,7 +41,7 @@ const Login = () => {
     if (!input.email.trim()) newErrors.email = "Email is required.";
     else if (!EMAIL_REGEX.test(input.email.trim())) newErrors.email = "Enter a valid email address.";
     if (!input.password) newErrors.password = "Password is required.";
-    else if (input.password.length < 6) newErrors.password = "Password must be at least 6 characters.";
+    else if (input.password.length < 4) newErrors.password = "Password must be at least 4 characters.";
     if (!input.role) newErrors.role = "Please select a role.";
     return newErrors;
   };

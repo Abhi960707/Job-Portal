@@ -4,6 +4,7 @@ import Job from './Job';
 import { useSelector } from 'react-redux';
 import useGetAllJobs from '@/hooks/useGetAllJobs';
 import { Input } from './ui/input';
+import BackButton from './shared/BackButton';
 
 const Browse = () => {
     useGetAllJobs(); // Ensure we fetch all jobs
@@ -23,6 +24,9 @@ const Browse = () => {
         <div>
             <Navbar />
             <div className='max-w-7xl mx-auto my-10 px-4'>
+                <div className='mb-4'>
+                    <BackButton to="/" label="Back to Home" />
+                </div>
                 <div className='flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8'>
                     <h1 className='font-bold text-2xl text-green-600'>Search Results ({filteredJobs.length})</h1>
                     <Input

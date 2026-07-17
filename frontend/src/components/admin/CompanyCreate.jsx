@@ -10,6 +10,7 @@ import { useDispatch } from 'react-redux'
 import { setSingleCompany } from '@/redux/companySlice'
 import { toast } from 'sonner'
 import { Loader2, Building2 } from 'lucide-react'
+import BackButton from '../shared/BackButton'
 
 const CompanyCreate = () => {
     const navigate = useNavigate();
@@ -63,6 +64,9 @@ const CompanyCreate = () => {
         <div className="min-h-screen bg-gray-50 pb-10">
             <Navbar />
             <div className='max-w-xl mx-auto my-16 px-4'>
+                <div className='mb-4'>
+                    <BackButton to="/admin/companies" label="Back to Companies" />
+                </div>
                 <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
                     
                     {/* Header */}

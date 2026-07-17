@@ -213,3 +213,21 @@ export const updateCompany = async (req, res) => {
         });
     }
 };
+
+// ─── DELETE COMPANY ────────────────────────────────────────────────────────────
+export const deleteCompany = async (req, res) => {
+    try {
+        const existing = await Company.findById(req.params.id);
+        if (!existing) {
+            return res.status(404).json({ message: "Company not found.", success: false });
+        }
+        if (String(existing.userId) !== String(req.id)) {
+            return res.status(403).json({ message: "You are not authorized to delete this company.", success: false });
+        }
+        await Company.findByIdAndDelete(req.params.id);
+        return res.status(200).json({ message: "Company deleted successfully.", success: true });
+    } catch (error) {
+        console.error("[deleteCompany]", error);
+        return res.status(500).json({ message: "Internal server error.", success: false });
+    }
+};

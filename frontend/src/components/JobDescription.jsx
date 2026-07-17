@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import Navbar from './shared/Navbar';
 import { Loader2 } from 'lucide-react';
+import BackButton from './shared/BackButton';
 
 const JobDescription = () => {
     const params = useParams();
@@ -70,7 +71,10 @@ const JobDescription = () => {
     return (
         <div className="bg-gray-50 min-h-screen pb-10">
             <Navbar />
-            <div className='max-w-4xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-sm border border-gray-100'>
+            <div className='max-w-4xl mx-auto mt-6 px-4'>
+                <BackButton label="Back to Jobs" />
+            </div>
+            <div className='max-w-4xl mx-auto mt-4 px-4 bg-white p-8 rounded-2xl shadow-sm border border-gray-100'>
                 
                 {/* Header */}
                 <div className='flex flex-col md:flex-row md:items-center justify-between gap-6'>

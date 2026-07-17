@@ -59,7 +59,7 @@ const Signup = () => {
     else if (!PHONE_REGEX.test(cleanPhone)) newErrors.phoneNumber = "Enter a valid 10-digit phone number.";
     
     if (!input.password) newErrors.password = "Password is required.";
-    else if (input.password.length < 6) newErrors.password = "Password must be at least 6 characters.";
+    else if (input.password.length < 4) newErrors.password = "Password must be at least 4 characters.";
     
     if (!input.role) newErrors.role = "Please select a role.";
 
@@ -183,7 +183,7 @@ const Signup = () => {
                     name="password"
                     value={input.password}
                     onChange={changeEventHandler}
-                    placeholder="Min. 6 characters"
+                    placeholder="Min. 4 characters"
                     className={`h-11 pr-10 ${errors.password ? 'border-red-400 focus-visible:ring-red-300' : 'border-gray-200'}`}
                   />
                   <button

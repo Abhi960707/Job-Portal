@@ -162,3 +162,24 @@ export const updateStatus = async (req, res) => {
         });
     }
 };
+
+// ─── GET ALL APPLICANTS FOR RECRUITER (all jobs) ──────────────────────────────
+export const getAllApplicants = async (req, res) => {
+    try {
+        const adminId = req.id;
+        // Get all jobs created by this recruiter
+        const jobs = await Job.find({ created_by: adminId }).select("_id title");
+        const jobIds = jobs.map(j => j._id);
+
+        // Get all applications for those jobs, populate applicant + job info
+        const applications = await Application.find({ job: { $in: jobIds } })
+            .sort({ createdAt: -1 })
+            .populate({ path: "applicant" })
+            .populate({ path: "job", populate: { path: "company" } });
+
+        return res.status(200).json({ applications, success: true });
+    } catch (error) {
+        console.error("[getAllApplicants]", error);
+        return res.status(500).json({ message: "Internal server error.", success: false });
+    }
+};

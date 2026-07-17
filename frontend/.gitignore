@@ -1,22 +1,62 @@
-# Logs
-logs
-*.log
+# ==========================================
+# Frontend (React/Vite) .gitignore
+# ==========================================
+
+# ─── Dependencies ─────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ─── Build & Artifacts ────────────────────
+dist/
+dist-ssr/
+build/
+coverage/
+
+# ─── Environment & Secrets ─────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.local
+secrets.json
+
+# ─── Caches & Temp ─────────────────────────
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+temp/
+tmp/
+
+# ─── Testing ───────────────────────────────
+cypress/videos/
+cypress/screenshots/
+
+# ─── Logs ──────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ─── OS generated files ────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Editor directories and files
+# ─── IDE and Editor files ──────────────────
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj

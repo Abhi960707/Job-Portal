@@ -3,13 +3,14 @@ import Navbar from '../shared/Navbar'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { COMPANY_API_END_POINT } from '@/utils/constant'
 import { useSelector } from 'react-redux'
 import useGetCompanyById from '@/hooks/useGetCompanyById'
 import { toast } from 'sonner'
+import BackButton from '../shared/BackButton'
 
 const CompanySetup = () => {
     const params = useParams();
@@ -87,9 +88,7 @@ const CompanySetup = () => {
             <div className='max-w-xl mx-auto my-10 px-4'>
                 <form onSubmit={submitHandler} className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 space-y-6">
                     <div className='flex items-center gap-4 justify-between border-b pb-4'>
-                        <Button type="button" onClick={() => navigate("/admin/companies")} variant="ghost" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-                            <ArrowLeft className="h-4 w-4" /> Back
-                        </Button>
+                        <BackButton to="/admin/companies" label="Back to Companies" />
                         <h1 className='font-bold text-xl text-gray-800'>Company Setup</h1>
                     </div>
 

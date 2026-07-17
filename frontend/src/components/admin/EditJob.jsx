@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '../shared/Navbar'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { useSelector } from 'react-redux'
 import useGetCompany from '@/hooks/useGetCompany'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { JOB_API_END_POINT } from '@/utils/constant'
 import { toast } from 'sonner'
@@ -14,11 +14,13 @@ import BackButton from '../shared/BackButton'
 
 const VALID_JOB_TYPES = ["Full-Time", "Part-Time", "Internship", "Contract", "Remote"];
 
-const PostJob = () => {
+const EditJob = () => {
     useGetCompany();
     const navigate = useNavigate();
+    const { id: jobId } = useParams();
     const { companies } = useSelector(store => store.company);
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
 
     const [input, setInput] = useState({
         title: "",
@@ -34,15 +36,39 @@ const PostJob = () => {
 
     const [errors, setErrors] = useState({});
 
+    // Fetch existing job data
+    useEffect(() => {
+        const fetchJob = async () => {
+            try {
+                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true });
+                if (res.data.success) {
+                    const job = res.data.job;
+                    setInput({
+                        title: job.title || "",
+                        description: job.description || "",
+                        requirements: Array.isArray(job.requirements) ? job.requirements.join(", ") : "",
+                        salary: job.salary?.toString() || "",
+                        location: job.location || "",
+                        jobType: job.jobType || "Full-Time",
+                        experience: job.experienceLevel?.toString() || "",
+                        position: job.position?.toString() || "",
+                        companyId: job.company?._id || ""
+                    });
+                }
+            } catch (error) {
+                toast.error("Failed to load job details");
+                navigate("/admin/jobs");
+            } finally {
+                setFetching(false);
+            }
+        };
+        fetchJob();
+    }, [jobId]);
+
     const changeEventHandler = (e) => {
         const { name, value } = e.target;
         setInput({ ...input, [name]: value });
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
-    }
-
-    const selectChangeHandler = (e) => {
-        setInput({ ...input, companyId: e.target.value });
-        if (errors.companyId) setErrors(prev => ({ ...prev, companyId: "" }));
     }
 
     const validate = () => {
@@ -50,27 +76,25 @@ const PostJob = () => {
         if (!input.title.trim() || input.title.trim().length < 3) newErrors.title = "Title must be at least 3 characters.";
         if (!input.description.trim()) newErrors.description = "Description is required.";
         if (!input.requirements.trim()) newErrors.requirements = "Requirements are required.";
-        
+
         const salaryNum = Number(input.salary);
         if (input.salary === "" || isNaN(salaryNum) || salaryNum < 0) newErrors.salary = "Enter a valid positive number for salary.";
-        
+
         if (!input.location.trim()) newErrors.location = "Location is required.";
         if (!VALID_JOB_TYPES.includes(input.jobType)) newErrors.jobType = "Select a valid job type.";
-        
+
         const expNum = Number(input.experience);
         if (input.experience === "" || isNaN(expNum) || expNum < 0) newErrors.experience = "Enter a valid non-negative number.";
-        
+
         const posNum = Number(input.position);
         if (input.position === "" || !Number.isInteger(posNum) || posNum < 1) newErrors.position = "Positions must be at least 1.";
-        
-        if (!input.companyId) newErrors.companyId = "Please select a company.";
 
         return newErrors;
     };
 
     const submitHandler = async (e) => {
         e.preventDefault();
-        
+
         const validationErrors = validate();
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
@@ -79,10 +103,18 @@ const PostJob = () => {
 
         try {
             setLoading(true);
-            const res = await axios.post(`${JOB_API_END_POINT}/post`, input, {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+            const payload = {
+                title: input.title,
+                description: input.description,
+                requirements: input.requirements,
+                salary: input.salary,
+                location: input.location,
+                jobType: input.jobType,
+                experience: input.experience,
+                position: input.position
+            };
+            const res = await axios.put(`${JOB_API_END_POINT}/update/${jobId}`, payload, {
+                headers: { 'Content-Type': 'application/json' },
                 withCredentials: true
             });
 
@@ -91,11 +123,22 @@ const PostJob = () => {
                 navigate("/admin/jobs");
             }
         } catch (error) {
-            console.log(error);
-            toast.error(error.response?.data?.message || "Failed to post job");
+            toast.error(error.response?.data?.message || "Failed to update job");
         } finally {
             setLoading(false);
         }
+    }
+
+    if (fetching) {
+        return (
+            <div>
+                <Navbar />
+                <div className="max-w-3xl mx-auto my-10 px-4 flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#6A38C2]" />
+                    <span className="ml-3 text-gray-600">Loading job details...</span>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -105,16 +148,8 @@ const PostJob = () => {
                 <form onSubmit={submitHandler} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 space-y-6">
                     <div className='flex items-center gap-4 justify-between border-b pb-4'>
                         <BackButton to="/admin/jobs" label="Back to Jobs" />
-                        <h1 className='font-bold text-2xl text-gray-800'>Post New Job</h1>
+                        <h1 className='font-bold text-2xl text-gray-800'>Edit Job</h1>
                     </div>
-
-                    {
-                        companies.length === 0 ? (
-                            <div className="text-center py-6 text-red-600 bg-red-50 border border-red-100 rounded-lg font-medium">
-                                * Please register a company first before posting a job.
-                            </div>
-                        ) : null
-                    }
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div className="space-y-1">
@@ -156,7 +191,7 @@ const PostJob = () => {
                                 placeholder="React, Node.js (comma separated)"
                                 className={errors.requirements ? "border-red-400" : ""}
                             />
-                             {errors.requirements && <p className="text-red-500 text-xs mt-1">{errors.requirements}</p>}
+                            {errors.requirements && <p className="text-red-500 text-xs mt-1">{errors.requirements}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -186,7 +221,7 @@ const PostJob = () => {
                                 placeholder="Remote, Bangalore, Mumbai"
                                 className={errors.location ? "border-red-400" : ""}
                             />
-                             {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+                            {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -217,7 +252,7 @@ const PostJob = () => {
                                 min="0"
                                 className={errors.experience ? "border-red-400" : ""}
                             />
-                             {errors.experience && <p className="text-red-500 text-xs mt-1">{errors.experience}</p>}
+                            {errors.experience && <p className="text-red-500 text-xs mt-1">{errors.experience}</p>}
                         </div>
 
                         <div className="space-y-1">
@@ -236,33 +271,15 @@ const PostJob = () => {
                         </div>
                     </div>
 
-                    <div className="space-y-1 pt-2 border-t border-gray-100">
-                        <Label htmlFor="company" className="font-semibold text-gray-700">Select Company</Label>
-                        <select
-                            id="company"
-                            value={input.companyId}
-                            onChange={selectChangeHandler}
-                            className={`w-full bg-white border rounded-md h-11 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${errors.companyId ? 'border-red-400' : 'border-input'}`}
-                        >
-                            <option value="">-- Choose a registered company --</option>
-                            {
-                                companies.map((company) => (
-                                    <option key={company._id} value={company._id}>{company.name}</option>
-                                ))
-                            }
-                        </select>
-                        {errors.companyId && <p className="text-red-500 text-xs mt-1">{errors.companyId}</p>}
-                    </div>
-
                     <div className="pt-4">
                         {
                             loading ? (
                                 <Button disabled className="w-full h-11 bg-[#6A38C2] text-white">
-                                    <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Posting Job...
+                                    <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Updating Job...
                                 </Button>
                             ) : (
-                                <Button type="submit" disabled={companies.length === 0} className="w-full h-11 bg-[#6A38C2] hover:bg-[#5d07f1] text-white font-semibold text-md rounded-xl transition-colors shadow-md">
-                                    Post Job
+                                <Button type="submit" className="w-full h-11 bg-[#6A38C2] hover:bg-[#5d07f1] text-white font-semibold text-md rounded-xl transition-colors shadow-md">
+                                    Update Job
                                 </Button>
                             )
                         }
@@ -273,4 +290,4 @@ const PostJob = () => {
     )
 }
 
-export default PostJob
+export default EditJob

@@ -5,6 +5,7 @@ import Job from './Job'
 import { useSelector, useDispatch } from 'react-redux';
 import useGetAllJobs from '@/hooks/useGetAllJobs';
 import { setSearchJobByText } from '@/redux/jobSlice';
+import BackButton from './shared/BackButton';
 
 const Jobs = () => {
     useGetAllJobs(); 
@@ -77,6 +78,9 @@ const Jobs = () => {
         <div className="bg-gray-50 min-h-screen">
             <Navbar />
             <div className='max-w-7xl mx-auto mt-5 px-4'>
+                <div className='mb-3'>
+                    <BackButton to="/" label="Back to Home" />
+                </div>
                 <div className='flex gap-6 flex-col lg:flex-row'>
                     <div className='w-full lg:w-[22%]'>
                         <FilterCard 
