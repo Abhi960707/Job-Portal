@@ -9,7 +9,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import { USER_API_END_POINT } from '@/utils/constant'
 import { useDispatch, useSelector } from 'react-redux'
-import { setLoading, setUser } from '@/redux/authSlice'
+import { setLoading, setUser, setToken } from '@/redux/authSlice'
 import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,6 +61,7 @@ const Login = () => {
       });
       if (res.data.success) {
         dispatch(setUser(res.data.user));
+        dispatch(setToken(res.data.token)); // Store token for Authorization header fallback
         navigate(res.data.user.role === 'recruiter' ? '/admin/companies' : '/');
         toast.success(res.data.message);
       }

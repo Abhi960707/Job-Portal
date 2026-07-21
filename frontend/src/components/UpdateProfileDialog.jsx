@@ -12,7 +12,7 @@ import axios from 'axios'
 
 const UpdateProfileDialog = ({ open, setOpen }) => {
     const [loading, setLoading] = useState(false);
-    const { user } = useSelector(store => store.auth);
+    const { user, token } = useSelector(store => store.auth); // Get both user and stored token
     const dispatch = useDispatch();
 
     const [input, setInput] = useState({
@@ -62,7 +62,9 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
             setLoading(true);
             const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
+                    // Send token as Authorization header — works even if cross-origin cookie is blocked
+                    ...(token && { 'Authorization': `Bearer ${token}` })
                 },
                 withCredentials: true
             });

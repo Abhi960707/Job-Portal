@@ -18,6 +18,7 @@ const PostJob = () => {
     useGetCompany();
     const navigate = useNavigate();
     const { companies } = useSelector(store => store.company);
+    const { token } = useSelector(store => store.auth);
     const [loading, setLoading] = useState(false);
 
     const [input, setInput] = useState({
@@ -81,7 +82,8 @@ const PostJob = () => {
             setLoading(true);
             const res = await axios.post(`${JOB_API_END_POINT}/post`, input, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Bearer ${token}` })
                 },
                 withCredentials: true
             });

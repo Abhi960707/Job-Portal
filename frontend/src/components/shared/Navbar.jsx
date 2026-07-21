@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { USER_API_END_POINT } from '@/utils/constant'
 import axios from 'axios'
-import { setUser } from '@/redux/authSlice'
+import { setUser, setToken } from '@/redux/authSlice'
 import { setSearchJobByText } from '@/redux/jobSlice'
 import { toast } from 'sonner'
 import { Input } from '../ui/input'
@@ -23,6 +23,7 @@ const Navbar = () => {
             const res = await axios.get(`${USER_API_END_POINT}/logout`, { withCredentials: true });
             if (res.data.success) {
                 dispatch(setUser(null));
+                dispatch(setToken(null)); // Clear stored token on logout
                 navigate("/");
                 toast.success(res.data.message);
             }

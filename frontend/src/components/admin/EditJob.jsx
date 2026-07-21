@@ -19,6 +19,7 @@ const EditJob = () => {
     const navigate = useNavigate();
     const { id: jobId } = useParams();
     const { companies } = useSelector(store => store.company);
+    const { token } = useSelector(store => store.auth);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
 
@@ -40,7 +41,10 @@ const EditJob = () => {
     useEffect(() => {
         const fetchJob = async () => {
             try {
-                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true });
+                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
+                    withCredentials: true,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 if (res.data.success) {
                     const job = res.data.job;
                     setInput({
@@ -114,7 +118,10 @@ const EditJob = () => {
                 position: input.position
             };
             const res = await axios.put(`${JOB_API_END_POINT}/update/${jobId}`, payload, {
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
                 withCredentials: true
             });
 

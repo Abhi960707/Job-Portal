@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import Navbar from './shared/Navbar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import BackButton from './shared/BackButton';
 
 const JobDescription = () => {
@@ -16,8 +16,9 @@ const JobDescription = () => {
     const jobId = params.id;
     const navigate = useNavigate();
     const { singleJob } = useSelector(store => store.job);
-    const { user } = useSelector(store => store.auth)
+    const { user, token } = useSelector(store => store.auth) // Get token for Authorization header
     const dispatch = useDispatch();
+    const [fetchError, setFetchError] = useState(false); // ← tracks failed fetch
 
     const isApplied = singleJob?.applications?.some(application => application.applicant === user?._id || application.applicant?._id === user?._id) || false;
 
@@ -34,7 +35,10 @@ const JobDescription = () => {
         }
 
         try {
-            const res = await axios.post(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {}, { withCredentials: true });
+            const res = await axios.post(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {}, {
+                withCredentials: true,
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
             if (res.data.success) {
                 toast.success(res.data.message);
                 const updatedApplications = [...(singleJob.applications || []), { applicant: user?._id }];
@@ -47,19 +51,53 @@ const JobDescription = () => {
     }
 
     useEffect(() => {
+        // Clear previous job & error state when jobId changes
+        setFetchError(false);
+        dispatch(setSingleJob(null));
+
         const fetchSingleJob = async () => {
             try {
-                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true });
+                // Send both cookie and Authorization header:
+                // - withCredentials: sends cookie if browser allows (same-origin or sameSite=none)
+                // - Authorization: Bearer token fallback (works cross-origin regardless of cookies)
+                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
+                    withCredentials: true,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 if (res.data.success) {
                     dispatch(setSingleJob(res.data.job));
+                } else {
+                    setFetchError(true);
                 }
             } catch (error) {
                 console.log(error);
+                setFetchError(true);
             }
         }
         fetchSingleJob();
-    }, [jobId, dispatch, user?._id])
+    }, [jobId, dispatch, token])
 
+    // ── Error State ─────────────────────────────────────────────────────────────
+    if (fetchError) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Navbar />
+                <div className="max-w-4xl mx-auto mt-6 px-4">
+                    <BackButton label="Back to Jobs" />
+                </div>
+                <div className="flex flex-col items-center justify-center py-32 gap-4">
+                    <AlertCircle className="h-14 w-14 text-red-400" />
+                    <h2 className="text-2xl font-bold text-gray-800">Job Not Found</h2>
+                    <p className="text-gray-500">This job may have been removed or the link is invalid.</p>
+                    <Button onClick={() => navigate('/jobs')} className="mt-4 bg-[#6A38C2] hover:bg-[#5d07f1] text-white px-6">
+                        Browse Jobs
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
+    // ── Loading State ────────────────────────────────────────────────────────────
     if (!singleJob) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">

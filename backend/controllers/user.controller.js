@@ -215,6 +215,7 @@ export const login = async (req, res) => {
             .json({
                 message: `Welcome back, ${user.fullname}!`,
                 user: safeUser,
+                token, // ← Also send token in body so frontend can use it as Authorization header
                 success: true
             });
     } catch (error) {
