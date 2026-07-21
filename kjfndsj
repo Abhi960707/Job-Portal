@@ -1,0 +1,158 @@
+[33mcommit 38dd6f7588820b785580cd6291d6b9d6cd85f744[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Abhijeet Narsale <abhijeetnarsale14082004@gmail.com>
+Date:   Tue Jul 21 15:29:57 2026 +0530
+
+    User not Authenticated issue solved
+
+[1mdiff --git a/backend/controllers/user.controller.js b/backend/controllers/user.controller.js[m
+[1mindex 73f7c36..f94fed2 100644[m
+[1m--- a/backend/controllers/user.controller.js[m
+[1m+++ b/backend/controllers/user.controller.js[m
+[36m@@ -215,6 +215,7 @@[m [mexport const login = async (req, res) => {[m
+             .json({[m
+                 message: `Welcome back, ${user.fullname}!`,[m
+                 user: safeUser,[m
+[32m+[m[32m                token, // ← Also send token in body so frontend can use it as Authorization header[m
+                 success: true[m
+             });[m
+     } catch (error) {[m
+[1mdiff --git a/backend/middlewares/isAuthenticated.js b/backend/middlewares/isAuthenticated.js[m
+[1mindex 4db277c..3c29b6e 100644[m
+[1m--- a/backend/middlewares/isAuthenticated.js[m
+[1m+++ b/backend/middlewares/isAuthenticated.js[m
+[36m@@ -2,27 +2,31 @@[m [mimport jwt from "jsonwebtoken"[m
+ [m
+ const isAuthenticated = async (req, res, next) => {[m
+     try {[m
+[31m-        const token = req.cookies.token;[m
+[32m+[m[32m        // Support both cookie-based auth (primary) and Authorization header (fallback)[m
+[32m+[m[32m        const token = req.cookies.token || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.split(" ")[1] : null);[m
+[32m+[m
+         if (!token) {[m
+             return res.status(401).json({[m
+                 message: "User not authenticated",[m
+                 success: false,[m
+             })[m
+         }[m
+[31m-        const decode=await jwt.verify(token,process.env.SECRET_KEY);[m
+[31m-        if(!decode){[m
+[32m+[m
+[32m+[m[32m        const decode = jwt.verify(token, process.env.SECRET_KEY);[m
+[32m+[m[32m        if (!decode) {[m
+             return res.status(401).json({[m
+[31m-                message:"Invalid token",[m
+[31m-                success:false[m
+[31m-            })[m
+[31m-        };[m
+[31m-        req.id=decode.userId;[m
+[32m+[m[32m                message: "Invalid token",[m
+[32m+[m[32m                success: false[m
+[32m+[m[32m            });[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        req.id = decode.userId;[m
+         next();[m
+     } catch (error) {[m
+[31m-         return res.status(401).json({[m
+[31m-            message: "Authentication failed",[m
+[32m+[m[32m        return res.status(401).json({[m
+[32m+[m[32m            message: "Authentication failed. Please login again.",[m
+             success: false[m
+         })[m
+     }[m
+[31m-} [m
+[32m+[m[32m}[m
+ export default isAuthenticated;[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/routes/job.route.js b/backend/routes/job.route.js[m
+[1mindex 48d58dc..6aa4c33 100644[m
+[1m--- a/backend/routes/job.route.js[m
+[1m+++ b/backend/routes/job.route.js[m
+[36m@@ -5,9 +5,9 @@[m [mimport { getAdminJobs, getAllJobs, getJobById, postJob, deleteJob, updateJob } f[m
+ const router = express.Router();[m
+ [m
+ router.route("/post").post(isAuthenticated, postJob);[m
+[31m-router.route("/get").get(getAllJobs); // Public: no auth required to browse job listings[m
+[32m+[m[32mrouter.route("/get").get(getAllJobs);                 // Public: browse all jobs[m
+ router.route("/getadminjobs").get(isAuthenticated, getAdminJobs);[m
+[31m-router.route("/get/:id").get(isAuthenticated, getJobById);[m
+[32m+[m[32mrouter.route("/get/:id").get(getJobById);             // Public: view single job detail[m
+ router.route("/delete/:id").delete(isAuthenticated, deleteJob);[m
+ router.route("/update/:id").put(isAuthenticated, updateJob);[m
+ [m
+[1mdiff --git a/frontend/src/components/JobDescription.jsx b/frontend/src/components/JobDescription.jsx[m
+[1mindex 97ae5c6..a002875 100644[m
+[1m--- a/frontend/src/components/JobDescription.jsx[m
+[1m+++ b/frontend/src/components/JobDescription.jsx[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-import React, { useEffect } from 'react'[m
+[32m+[m[32mimport React, { useEffect, useState } from 'react'[m
+ import { Badge } from './ui/badge'[m
+ import { Button } from './ui/button'[m
+ import { useParams, useNavigate } from 'react-router-dom';[m
+[36m@@ -8,7 +8,7 @@[m [mimport { setSingleJob } from '@/redux/jobSlice';[m
+ import { useDispatch, useSelector } from 'react-redux';[m
+ import { toast } from 'sonner';[m
+ import Navbar from './shared/Navbar';[m
+[31m-import { Loader2 } from 'lucide-react';[m
+[32m+[m[32mimport { Loader2, AlertCircle } from 'lucide-react';[m
+ import BackButton from './shared/BackButton';[m
+ [m
+ const JobDescription = () => {[m
+[36m@@ -16,8 +16,9 @@[m [mconst JobDescription = () => {[m
+     const jobId = params.id;[m
+     const navigate = useNavigate();[m
+     const { singleJob } = useSelector(store => store.job);[m
+[31m-    const { user } = useSelector(store => store.auth)[m
+[32m+[m[32m    const { user, token } = useSelector(store => store.auth) // Get token for Authorization header[m
+     const dispatch = useDispatch();[m
+[32m+[m[32m    const [fetchError, setFetchError] = useState(false); // ← tracks failed fetch[m
+ [m
+     const isApplied = singleJob?.applications?.some(application => application.applicant === user?._id || application.applicant?._id === user?._id) || false;[m
+ [m
+[36m@@ -34,7 +35,10 @@[m [mconst JobDescription = () => {[m
+         }[m
+ [m
+         try {[m
+[31m-            const res = await axios.post(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {}, { withCredentials: true });[m
+[32m+[m[32m            const res = await axios.post(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {}, {[m
+[32m+[m[32m                withCredentials: true,[m
+[32m+[m[32m                headers: token ? { Authorization: `Bearer ${token}` } : {}[m
+[32m+[m[32m            });[m
+             if (res.data.success) {[m
+                 toast.success(res.data.message);[m
+                 const updatedApplications = [...(singleJob.applications || []), { applicant: user?._id }];[m
+[36m@@ -47,19 +51,53 @@[m [mconst JobDescription = () => {[m
+     }[m
+ [m
+     useEffect(() => {[m
+[32m+[m[32m        // Clear previous job & error state when jobId changes[m
+[32m+[m[32m        setFetchError(false);[m
+[32m+[m[32m        dispatch(setSingleJob(null));[m
+[32m+[m
+         const fetchSingleJob = async () => {[m
+             try {[m
+[31m-                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, { withCredentials: true });[m
+[32m+[m[32m                // Send both cookie and Authorization header:[m
+[32m+[m[32m                // - withCredentials: sends cookie if browser allows (same-origin or sameSite=none)[m
+[32m+[m[32m                // - Authorization: Bearer token fallback (works cross-origin regardless of cookies)[m
+[32m+[m[32m                const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {[m
+[32m+[m[32m                    withCredentials: true,[m
+[32m+[m[32m                    headers: token ? { Authorization: `Bearer ${token}` } : {}[m
+[32m+[m[32m                });[m
+                 if (res.data.success) {[m
+                     dispatch(setSingleJob(res.data.job));[m
+[32m+[m[32m                } else {[m
+[32m+[m[32m                    setFetchError(true);[m
+                 }[m
+             } catch (error) {[m
+                 console.log(error);[m
+[32m+[m[32m                setFetchError(true);[m
+             }[m
+         }[m
+         fetchSingleJob();[m
+[31m-    }, [jobId, dispatch, user?._id])[m
+[32m+[m[32m    }, [jobId, dispatch, token])[m
+[32m+[m
+[32m+[m[32m    // ── Error State ─────────────────────────────────────────────────────────────[m
+[32m+[m[32m    if 
