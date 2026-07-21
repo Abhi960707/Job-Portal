@@ -202,13 +202,15 @@ export const login = async (req, res) => {
             profile: user.profile
         };
 
+        const isProduction = process.env.NODE_ENV === "production";
+
         return res
             .status(200)
             .cookie("token", token, {
                 maxAge: 24 * 60 * 60 * 1000, // 1 day
                 httpOnly: true,
-                sameSite: "strict",
-                secure: process.env.NODE_ENV === "production"
+                sameSite: isProduction ? "none" : "lax", // "none" required for cross-origin (Vercel → Render)
+                secure: isProduction                      // "none" requires secure: true in production
             })
             .json({
                 message: `Welcome back, ${user.fullname}!`,
@@ -227,12 +229,15 @@ export const login = async (req, res) => {
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 export const logout = async (req, res) => {
     try {
+        const isProduction = process.env.NODE_ENV === "production";
+
         return res
             .status(200)
             .cookie("token", "", {
                 maxAge: 0,
                 httpOnly: true,
-                sameSite: "strict"
+                sameSite: isProduction ? "none" : "lax", // Must match login cookie settings to clear properly
+                secure: isProduction                      // Required when sameSite: "none"
             })
             .json({
                 message: "Logged out successfully.",

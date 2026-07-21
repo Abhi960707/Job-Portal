@@ -3,8 +3,8 @@
 // export const COMPANY_API_END_POINT="http://localhost:8000/api/v1/company";
 // export const APPLICATION_API_END_POINT="http://localhost:8000/api/v1/application";
 
-
-const API_URL = import.meta.env.VITE_API_URL;
+// Fallback ensures local dev works even without .env; production uses VITE_API_URL from Vercel env vars
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 export const USER_API_END_POINT = `${API_URL}/user`;
 export const JOB_API_END_POINT = `${API_URL}/job`;
